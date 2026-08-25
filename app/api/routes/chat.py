@@ -1,5 +1,7 @@
 from fastapi import APIRouter, HTTPException
+
 from app.models.schemas import QuestionRequest, AnswerResponse
+from app.services.llm import generate_answer
 
 router = APIRouter()
 
@@ -13,7 +15,16 @@ async def ask_question(request: QuestionRequest):
             detail="Question cannot be empty"
         )
 
+    try:
+        answer = generate_answer(request.question)
+
+    except RuntimeError:
+        raise HTTPException(
+            status_code=502,
+            detail="Unable to get a response from the LLM service"
+        )
+
     return {
         "question": request.question,
-        "answer": "This is where the RAG answer will eventually go."
+        "answer": answer
     }
