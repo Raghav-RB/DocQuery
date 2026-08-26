@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg18
+    container_name: docquery-postgres
+
+    environment:
+      POSTGRES_DB: docquery
+      POSTGRES_USER: docquery
+      POSTGRES_PASSWORD: docquery_password
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+volumes:
+  postgres_data:
