@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>DocQuery</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #1f2937;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            margin: 50px auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        header h1 {
+            margin-bottom: 8px;
+            font-size: 38px;
+        }
+
+        header p {
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+
+        .upload-area {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        input[type="file"] {
+            flex: 1;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 15px;
+            margin-bottom: 12px;
+        }
+
+        button {
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .status {
+            margin-top: 12px;
+            color: #4b5563;
+        }
+
+        .answer {
+            background: #f9fafb;
+            border-left: 4px solid #2563eb;
+            padding: 18px;
+            border-radius: 6px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .sources {
+            margin-top: 15px;
+        }
+
+        .sources li {
+            margin-bottom: 7px;
+            color: #4b5563;
+        }
+
+        .empty {
+            color: #9ca3af;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #9ca3af;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+
+<body>
+
+    <div class="container">
+
+        <header>
+            <h1>DocQuery</h1>
+            <p>Ask questions about your documents using AI</p>
+        </header>
+
+
+        <!-- Upload Section -->
+
+        <div class="card">
+
+            <h2>📄 Upload Document</h2>
+
+            <div class="upload-area">
+
+                <input
+                    type="file"
+                    id="fileInput"
+                    accept=".pdf"
+                >
+
+                <button id="uploadButton">
+                    Upload
+                </button>
+
+            </div>
+
+            <div
+                id="uploadStatus"
+                class="status"
+            >
+                No document uploaded yet.
+            </div>
+
+        </div>
+
+
+        <!-- Question Section -->
+
+        <div class="card">
+
+            <h2>💬 Ask a Question</h2>
+
+            <input
+                type="text"
+                id="questionInput"
+                placeholder="Ask something about your document..."
+            >
+
+            <button id="askButton">
+                Ask Question
+            </button>
+
+        </div>
+
+
+        <!-- Answer Section -->
+
+        <div class="card">
+
+            <h2>Answer</h2>
+
+            <div
+                id="answer"
+                class="answer empty"
+            >
+                Your answer will appear here.
+            </div>
+
+        </div>
+
+
+        <!-- Sources Section -->
+
+        <div class="card">
+
+            <h2>Sources</h2>
+
+            <ul
+                id="sources"
+                class="sources"
+            >
+                <li class="empty">
+                    Sources will appear here.
+                </li>
+            </ul>
+
+        </div>
+
+
+        <footer>
+            DocQuery — AI Document Question Answering
+        </footer>
+
+    </div>
+
+
+    <script>
+
+        const API_URL = "http://127.0.0.1:8000";
+
+
+        const fileInput =
+            document.getElementById("fileInput");
+
+        const uploadButton =
+            document.getElementById("uploadButton");
+
+        const uploadStatus =
+            document.getElementById("uploadStatus");
+
+        const questionInput =
+            document.getElementById("questionInput");
+
+        const askButton =
+            document.getElementById("askButton");
+
+        const answer =
+            document.getElementById("answer");
+
+        const sources =
+            document.getElementById("sources");
+
+
+        // Upload document
+
+        uploadButton.addEventListener(
+            "click",
+            async () => {
+
+                const file = fileInput.files[0];
+
+                if (!file) {
+
+                    uploadStatus.textContent =
+                        "Please select a PDF.";
+
+                    return;
+                }
+
+
+                const formData = new FormData();
+
+                formData.append(
+                    "file",
+                    file
+                );
+
+
+                uploadStatus.textContent =
+                    "Uploading and processing...";
+
+                uploadButton.disabled = true;
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            `${API_URL}/upload`,
+                            {
+                                method: "POST",
+                                body: formData
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            data.detail ||
+                            "Upload failed"
+                        );
+
+                    }
+
+
+                    uploadStatus.textContent =
+                        `✓ ${data.message}`;
+
+                }
+
+                catch (error) {
+
+                    uploadStatus.textContent =
+                        `Error: ${error.message}`;
+
+                }
+
+                finally {
+
+                    uploadButton.disabled = false;
+
+                }
+
+            }
+        );
+
+
+        // Ask question
+
+        askButton.addEventListener(
+            "click",
+            async () => {
+
+                const question =
+                    questionInput.value.trim();
+
+
+                if (!question) {
+
+                    answer.textContent =
+                        "Please enter a question.";
+
+                    answer.classList.remove(
+                        "empty"
+                    );
+
+                    return;
+                }
+
+
+                answer.textContent =
+                    "Thinking...";
+
+                answer.classList.remove(
+                    "empty"
+                );
+
+                sources.innerHTML = "";
+
+                askButton.disabled = true;
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            `${API_URL}/ask`,
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body: JSON.stringify({
+                                    question: question
+                                })
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            data.detail ||
+                            "Request failed"
+                        );
+
+                    }
+
+
+                    answer.textContent =
+                        data.answer;
+
+
+                    if (
+                        data.sources &&
+                        data.sources.length > 0
+                    ) {
+
+                        data.sources.forEach(
+                            source => {
+
+                                const li =
+                                    document.createElement(
+                                        "li"
+                                    );
+
+                                li.textContent =
+                                    `${source.filename} — Page ${source.page}, Chunk ${source.chunk_index}`;
+
+                                sources.appendChild(li);
+
+                            }
+                        );
+
+                    }
+
+                    else {
+
+                        sources.innerHTML =
+                            `<li class="empty">No sources available.</li>`;
+
+                    }
+
+                }
+
+                catch (error) {
+
+                    answer.textContent =
+                        `Error: ${error.message}`;
+
+                }
+
+                finally {
+
+                    askButton.disabled = false;
+
+                }
+
+            }
+        );
+
+
+        // Allow Enter key to ask
+
+        questionInput.addEventListener(
+            "keydown",
+            (event) => {
+
+                if (event.key === "Enter") {
+
+                    askButton.click();
+
+                }
+
+            }
+        );
+
+    </script>
+
+</body>
+
+</html>
