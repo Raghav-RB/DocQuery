@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
 
 from app.models.schemas import QuestionRequest, AnswerResponse
-from app.services.llm import generate_answer
+from app.rag.service import answer_question
+
 
 router = APIRouter()
 
@@ -16,15 +17,16 @@ async def ask_question(request: QuestionRequest):
         )
 
     try:
-        answer = generate_answer(request.question)
+        result = answer_question(request.question)
 
     except RuntimeError:
         raise HTTPException(
             status_code=502,
-            detail="Unable to get a response from the LLM service"
+            detail="Unable to process the question"
         )
 
     return {
         "question": request.question,
-        "answer": answer
+        "answer": result["answer"],
+        "sources": result["sources"]
     }

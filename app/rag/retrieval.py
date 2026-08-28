@@ -3,8 +3,11 @@ def retrieve_similar_chunks(cursor, query_embedding, k=3):
         """
         SELECT
             text_content,
+            filename,
+            page,
+            chunk_index,
             embedding <=> %s::vector AS distance
-        FROM semantic_test
+        FROM document_chunks
         ORDER BY distance
         LIMIT %s
         """,
